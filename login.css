@@ -1,0 +1,96 @@
+/* ===== Base Reset ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #F9F5F6, #F8E8EE);
+}
+
+/* ===== Login Container ===== */
+.login-container {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 40px 30px;
+    width: 380px;
+    border-radius: 20px;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 20px rgba(242, 190, 209, 0.3);
+    text-align: center;
+    animation: fadeIn 0.4s ease;
+}
+
+.login-container h2 {
+    margin-bottom: 20px;
+    color: #C94F7C;
+}
+
+/* ===== Form Styles ===== */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+label {
+    text-align: left;
+    font-weight: 500;
+    color: #444;
+}
+
+input[type="email"],
+input[type="password"] {
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    background: rgba(255, 255, 255, 0.6);
+    transition: 0.3s;
+}
+
+input:focus {
+    border-color: #F2BED1;
+    outline: none;
+    background: #fff;
+}
+
+/* ===== Button ===== */
+.btn-primary {
+    background-color: #F2BED1;
+    border: none;
+    padding: 12px;
+    font-weight: bold;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #FDCEDF;
+}
+
+/* ===== Error Message ===== */
+.error {
+    color: red;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+/* ===== Animation ===== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+    .login-container {
+        width: 90%;
+        padding: 30px 20px;
+    }
+}
