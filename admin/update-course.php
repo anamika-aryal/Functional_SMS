@@ -1,74 +1,124 @@
-
 <?php
 include("../includes/auth.php");
 include("../includes/db.php");
 
-$course_id = $_GET['course_id'] ?? 0;
+$success = $error = "";
 
-$stmt = $conn->prepare("SELECT * FROM courses WHERE course_id = ?");
-$stmt->bind_param("i", $course_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$course = $result->fetch_assoc();
+// Get course ID
+if (!isset($_GET['id'])) {
+    die("Course ID not provided.");
+}
+$course_id = intval($_GET['id']);
+
+// Fetch course info
+$course_stmt = $conn->prepare("SELECT * FROM courses WHERE course_id = ?");
+$course_stmt->bind_param("i", $course_id);
+$course_stmt->execute();
+$course_result = $course_stmt->get_result();
+$course = $course_result->fetch_assoc();
 
 if (!$course) {
     die("Course not found.");
 }
 
+// Fetch program-course mapping
+$map_stmt = $conn->prepare("SELECT * FROM program_courses WHERE course_id = ? LIMIT 1");
+$map_stmt->bind_param("i", $course_id);
+$map_stmt->execute();
+$map_result = $map_stmt->get_result();
+$mapping = $map_result->fetch_assoc();
+
+// Fetch all programs for dropdown
+$programs_result = $conn->query("SELECT * FROM programs");
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $course_code = $_POST['course_code'];
-    $course_name = $_POST['course_name'];
-    $credits = $_POST['credits'];
-    $instructor_id = $_POST['instructor_id'];
+    $course_code = trim($_POST["course_code"]);
+    $course_name = trim($_POST["course_name"]);
+    $credits = intval($_POST["credits"]);
+    $instructor_id = intval($_POST["instructor_id"]);
+    $program_id = intval($_POST["program_id"]);
+    $semester = intval($_POST["semester"]);
 
-    $stmt = $conn->prepare("UPDATE courses SET course_code=?, course_name=?, credits=?, instructor_id=? WHERE course_id=?");
-    $stmt->bind_param("ssiii", $course_code, $course_name, $credits, $instructor_id, $course_id);
-    $stmt->execute();
+    if (empty($course_code) || empty($course_name) || $credits <= 0 || $semester <= 0 || !$program_id) {
+        $error = "All fields are required.";
+    } else {
+        // Update course info
+        $update_stmt = $conn->prepare("UPDATE courses SET course_code = ?, course_name = ?, credits = ?, instructor_id = ? WHERE course_id = ?");
+        $update_stmt->bind_param("ssiii", $course_code, $course_name, $credits, $instructor_id, $course_id);
+        $update_stmt->execute();
 
-    header("Location: dashboard.php?msg=Course Updated");
-    exit;
+        // Update program_courses mapping
+        if ($mapping) {
+            $map_update_stmt = $conn->prepare("UPDATE program_courses SET program_id = ?, semester = ? WHERE course_id = ?");
+            $map_update_stmt->bind_param("iii", $program_id, $semester, $course_id);
+            $map_update_stmt->execute();
+        } else {
+            // If not mapped yet, insert new mapping
+            $map_insert_stmt = $conn->prepare("INSERT INTO program_courses (program_id, course_id, semester) VALUES (?, ?, ?)");
+            $map_insert_stmt->bind_param("iii", $program_id, $course_id, $semester);
+            $map_insert_stmt->execute();
+        }
+
+        $success = "Course updated successfully.";
+    }
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Update Course</title>
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="navigation">
-        <h2>Update Course</h2>
-        <a href="dashboard.php">⬅ Back to Dashboard</a>
-    </div>
+<?php include("header.php"); ?>
 
-    <div class="form-container">
-        <form method="POST">
-            <label>Course Code</label>
-            <input type="text" name="course_code" value="<?= $course['course_code']; ?>" required>
+<div class="container">
+    <h2>Update Course</h2>
 
-            <label>Course Name</label>
-            <input type="text" name="course_name" value="<?= $course['course_name']; ?>" required>
+    <?php if ($success): ?>
+        <p style="color:green;"><?php echo $success; ?></p>
+    <?php elseif ($error): ?>
+        <p style="color:red;"><?php echo $error; ?></p>
+    <?php endif; ?>
 
-            <label>Credits</label>
-            <input type="number" name="credits" value="<?= $course['credits']; ?>" required min="1" max="10">
+    <form method="POST" action="">
+        <label>Course Code:</label><br>
+        <input type="text" name="course_code" value="<?php echo htmlspecialchars($course['course_code']); ?>" required><br><br>
 
-            <label>Instructor</label>
-            <select name="instructor_id" required>
-                <option value="">Select Teacher</option>
-                <?php
-                $teachers = $conn->query("SELECT teacher_id, first_name, last_name FROM teachers");
-                while ($t = $teachers->fetch_assoc()) {
-                    $selected = ($course['instructor_id'] == $t['teacher_id']) ? "selected" : "";
-                    echo "<option value='{$t['teacher_id']}' $selected>{$t['first_name']} {$t['last_name']}</option>";
-                }
-                ?>
-            </select>
+        <label>Course Name:</label><br>
+        <input type="text" name="course_name" value="<?php echo htmlspecialchars($course['course_name']); ?>" required><br><br>
 
-            <button type="submit" class="btn btn-primary">Update Course</button>
-        </form>
-    </div>
-    <?php include("includes/footer.php"); ?>
+        <label>Credits:</label><br>
+        <input type="number" name="credits" min="1" value="<?php echo $course['credits']; ?>" required><br><br>
+
+        <label>Instructor ID:</label><br>
+        <input type="number" name="instructor_id" value="<?php echo $course['instructor_id']; ?>" required><br><br>
+
+        <label>Program:</label><br>
+        <select name="program_id" required>
+            <option value="">-- Select Program --</option>
+            <?php while ($p = $programs_result->fetch_assoc()): ?>
+                <option value="<?php echo $p['program_id']; ?>" <?php if ($mapping && $p['program_id'] == $mapping['program_id']) echo 'selected'; ?>>
+                    <?php echo $p['program_name']; ?>
+                </option>
+            <?php endwhile; ?>
+        </select><br><br>
+
+        <label>Semester:</label><br>
+        <select name="semester" required>
+            <option value="">-- Select Semester --</option>
+            <?php for ($i = 1; $i <= 8; $i++): ?>
+                <option value="<?php echo $i; ?>" <?php if ($mapping && $i == $mapping['semester']) echo 'selected'; ?>>
+                    <?php echo $i; ?>
+                </option>
+            <?php endfor; ?>
+        </select><br><br>
+
+        <button type="submit">Update Course</button>
+    </form>
+</div>
+
+<?php include("footer.php"); ?>
 </body>
 </html>

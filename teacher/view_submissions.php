@@ -59,6 +59,7 @@ $submissions = $conn->query("
     <link rel="stylesheet" href="teacher.css">
 </head>
 <body>
+    
     <div class="navigation">
         <h2>Assignment Submissions</h2>
         <div>

@@ -14,8 +14,9 @@ $user_id = $_SESSION['user_id'];
 $teacher = $conn->query("SELECT teacher_id FROM teachers WHERE user_id = $user_id")->fetch_assoc();
 $teacher_id = $teacher['teacher_id'];
 
-// Selected course
+// Selected course & exam type
 $course_id = isset($_GET['course_id']) ? intval($_GET['course_id']) : 0;
+$exam_type = isset($_GET['exam_type']) ? $_GET['exam_type'] : "";
 
 // Fetch teacher's courses
 $courses = $conn->query("
@@ -24,9 +25,14 @@ $courses = $conn->query("
     WHERE instructor_id = $teacher_id
 ");
 
-// If course selected, fetch enrolled students
+// Fetch available exam types from ENUM
+$examTypeQuery = $conn->query("SHOW COLUMNS FROM results LIKE 'exam_type'")->fetch_assoc();
+preg_match("/^enum\('(.*)'\)$/", $examTypeQuery['Type'], $matches);
+$examTypes = explode("','", $matches[1]);
+
+// If course selected & exam type selected, fetch enrolled students
 $students = [];
-if ($course_id) {
+if ($course_id && $exam_type) {
     $students = $conn->query("
         SELECT st.student_id, st.first_name, st.last_name
         FROM enrollments e
@@ -40,10 +46,15 @@ $success = $error = "";
 
 // Handle form submission for results
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['results'])) {
+    $course_id = intval($_POST['course_id']);
+    $exam_type = $_POST['exam_type'];
+
     foreach ($_POST['results'] as $student_id => $data) {
         $internal = intval($data['internal_marks']);
         $external = intval($data['external_marks']);
         $total = $internal + $external;
+
+        // Grade point calculation
         $grade_point = $total >= 90 ? 10 :
                        ($total >= 80 ? 9 :
                        ($total >= 70 ? 8 :
@@ -59,15 +70,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['results'])) {
 
         $stmt = $conn->prepare("
             INSERT INTO results (student_id, course_id, internal_marks, external_marks, total_marks, grade_point, letter_grade, exam_type)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'Regular')
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE 
                 internal_marks = VALUES(internal_marks),
                 external_marks = VALUES(external_marks),
                 total_marks = VALUES(total_marks),
                 grade_point = VALUES(grade_point),
-                letter_grade = VALUES(letter_grade)
+                letter_grade = VALUES(letter_grade),
+                exam_type = VALUES(exam_type)
         ");
-        $stmt->bind_param("iiiiiss", $student_id, $course_id, $internal, $external, $total, $grade_point, $letter_grade);
+        $stmt->bind_param("iiiiidss", $student_id, $course_id, $internal, $external, $total, $grade_point, $letter_grade, $exam_type);
         $stmt->execute();
     }
 
@@ -104,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['results'])) {
             <p style="color:red;"><?= $error ?></p>
         <?php endif; ?>
 
-        <!-- Course Selection -->
+        <!-- Course & Exam Type Selection -->
         <form method="GET" style="margin-bottom:20px;">
             <label for="course_id">Select Course:</label>
             <select name="course_id" required>
@@ -115,11 +127,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['results'])) {
                     </option>
                 <?php endwhile; ?>
             </select>
+
+            <label for="exam_type">Select Exam Type:</label>
+            <select name="exam_type" required>
+                <option value="">Select Exam Type</option>
+                <?php foreach ($examTypes as $type): ?>
+                    <option value="<?= $type ?>" <?= ($exam_type == $type) ? 'selected' : '' ?>><?= $type ?></option>
+                <?php endforeach; ?>
+            </select>
+
             <button type="submit" class="btn btn-primary">Load Students</button>
         </form>
 
-        <?php if ($course_id && $students && $students->num_rows > 0): ?>
+        <?php if ($course_id && $exam_type && $students && $students->num_rows > 0): ?>
             <form method="POST">
+                <input type="hidden" name="course_id" value="<?= $course_id ?>">
+                <input type="hidden" name="exam_type" value="<?= $exam_type ?>">
+
                 <table>
                     <tr>
                         <th>Student Name</th>
@@ -136,7 +160,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['results'])) {
                 </table>
                 <button type="submit" class="btn btn-primary" style="margin-top:15px;">Save Results</button>
             </form>
-        <?php elseif ($course_id): ?>
+        <?php elseif ($course_id && $exam_type): ?>
             <p>No students enrolled in this course.</p>
         <?php endif; ?>
     </div>

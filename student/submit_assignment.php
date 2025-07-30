@@ -15,7 +15,7 @@ $student = $conn->query("SELECT student_id FROM students WHERE user_id = $user_i
 $student_id = $student['student_id'];
 
 // Validate assignment_id
-$assignment_id = isset($_GET['assignment_id']) ? intval($_GET['assignment_id']) : 0;
+$assignment_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $assignment = $conn->query("SELECT * FROM assignments WHERE assignment_id = $assignment_id")->fetch_assoc();
 
 if (!$assignment) {

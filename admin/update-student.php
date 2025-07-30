@@ -1,15 +1,23 @@
-
 <?php
-include("../includes/auth.php");
-include("../includes/db.php");
+include("./includes/auth.php");
+include("./includes/db.php");
 
-$student_id = $_GET['student_id'] ?? 0;
+$success = $error = "";
 
-// Fetch existing student info
+// Get student_id from query
+if (!isset($_GET['student_id'])) {
+    die("Student ID not provided.");
+}
+$student_id = intval($_GET['student_id']);
+
+// Fetch all programs
+$programs_result = $conn->query("SELECT * FROM programs");
+
+// Fetch student data
 $stmt = $conn->prepare("
     SELECT s.*, u.username, u.email 
-    FROM students s
-    JOIN users u ON s.user_id = u.user_id
+    FROM students s 
+    JOIN users u ON s.user_id = u.user_id 
     WHERE s.student_id = ?
 ");
 $stmt->bind_param("i", $student_id);
@@ -21,75 +29,111 @@ if (!$student) {
     die("Student not found.");
 }
 
-// Handle update
+// On submit
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
-    $email = $_POST['email'];
-    $first_name = $_POST['first_name'];
-    $last_name = $_POST['last_name'];
-    $dob = $_POST['dob'];
-    $gender = $_POST['gender'];
-    $address = $_POST['address'];
-    $phone = $_POST['phone'];
+    $first_name = trim($_POST["first_name"]);
+    $last_name = trim($_POST["last_name"]);
+    $email = trim($_POST["email"]);
+    $phone = trim($_POST["phone"]);
+    $username = trim($_POST["username"]);
 
-    // Update users table
-    $stmt = $conn->prepare("UPDATE users SET username=?, email=? WHERE user_id=?");
-    $stmt->bind_param("ssi", $username, $email, $student['user_id']);
-    $stmt->execute();
+    $program_id = intval($_POST["program_id"]);
+    $semester = intval($_POST["semester"]);
 
-    // Update students table
-    $stmt2 = $conn->prepare("UPDATE students SET first_name=?, last_name=?, dob=?, gender=?, address=?, phone=? WHERE student_id=?");
-    $stmt2->bind_param("ssssssi", $first_name, $last_name, $dob, $gender, $address, $phone, $student_id);
-    $stmt2->execute();
+    if (!$first_name || !$last_name || !$username || !$email || !$program_id || !$semester) {
+        $error = "All fields are required.";
+    } else {
+        // Update users table
+        $stmt1 = $conn->prepare("UPDATE users SET username = ?, email = ? WHERE user_id = ?");
+        $stmt1->bind_param("ssi", $username, $email, $student['user_id']);
+        $stmt1->execute();
 
-    header("Location: dashboard.php?msg=Student Updated");
-    exit;
+        // Update students table
+        $stmt2 = $conn->prepare("UPDATE students SET first_name = ?, last_name = ?, phone = ?, program_id = ?, semester = ? WHERE student_id = ?");
+        $stmt2->bind_param("sssiii", $first_name, $last_name, $phone, $program_id, $semester, $student_id);
+        if ($stmt2->execute()) {
+            // Remove existing enrollments
+            $conn->query("DELETE FROM enrollments WHERE student_id = $student_id");
+
+            // Fetch new courses
+            $course_q = $conn->prepare("SELECT course_id FROM program_courses WHERE program_id = ? AND semester = ?");
+            $course_q->bind_param("ii", $program_id, $semester);
+            $course_q->execute();
+            $result = $course_q->get_result();
+
+            // Re-insert enrollments
+            while ($row = $result->fetch_assoc()) {
+                $course_id = $row['course_id'];
+                $insert_enroll = $conn->prepare("INSERT INTO enrollments (student_id, course_id, semester) VALUES (?, ?, ?)");
+                $insert_enroll->bind_param("iii", $student_id, $course_id, $semester);
+                $insert_enroll->execute();
+            }
+
+            $success = "Student updated successfully with new course mappings.";
+        } else {
+            $error = "Failed to update student.";
+        }
+    }
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Update Student</title>
-    <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-    <?php //include("../includes/header.php"); ?>
+<?php include("header.php"); ?>
 
-    <div class="form-container">
-        <h3>Update Student</h3>
-        <form method="POST">
-            <label>Username</label>
-            <input type="text" name="username" value="<?= $student['username']; ?>" required>
+<div class="container">
+    <h2>Update Student</h2>
 
-            <label>Email</label>
-            <input type="email" name="email" value="<?= $student['email']; ?>" required>
+    <?php if ($success): ?>
+        <p style="color:green;"><?php echo $success; ?></p>
+    <?php elseif ($error): ?>
+        <p style="color:red;"><?php echo $error; ?></p>
+    <?php endif; ?>
 
-            <label>First Name</label>
-            <input type="text" name="first_name" value="<?= $student['first_name']; ?>" required>
+    <form method="POST" action="">
+        <label>First Name:</label><br>
+        <input type="text" name="first_name" value="<?php echo htmlspecialchars($student['first_name']); ?>" required><br><br>
 
-            <label>Last Name</label>
-            <input type="text" name="last_name" value="<?= $student['last_name']; ?>" required>
+        <label>Last Name:</label><br>
+        <input type="text" name="last_name" value="<?php echo htmlspecialchars($student['last_name']); ?>" required><br><br>
 
-            <label>Date of Birth</label>
-            <input type="date" name="dob" value="<?= $student['dob']; ?>" required>
+        <label>Email:</label><br>
+        <input type="email" name="email" value="<?php echo htmlspecialchars($student['email']); ?>" required><br><br>
 
-            <label>Gender</label>
-            <select name="gender" required>
-                <option <?= $student['gender']=='Male'?'selected':''; ?>>Male</option>
-                <option <?= $student['gender']=='Female'?'selected':''; ?>>Female</option>
-            </select>
+        <label>Phone:</label><br>
+        <input type="text" name="phone" value="<?php echo htmlspecialchars($student['phone']); ?>" required><br><br>
 
-            <label>Address</label>
-            <textarea name="address" required><?= $student['address']; ?></textarea>
+        <label>Username:</label><br>
+        <input type="text" name="username" value="<?php echo htmlspecialchars($student['username']); ?>" required><br><br>
 
-            <label>Phone</label>
-            <input type="text" name="phone" value="<?= $student['phone']; ?>" required>
+        <label>Program:</label><br>
+        <select name="program_id" required>
+            <option value="">-- Select Program --</option>
+            <?php
+            $programs_result->data_seek(0); // rewind
+            while ($row = $programs_result->fetch_assoc()):
+                $selected = $row['program_id'] == $student['program_id'] ? "selected" : "";
+                echo "<option value='{$row['program_id']}' $selected>{$row['program_name']}</option>";
+            endwhile;
+            ?>
+        </select><br><br>
 
-            <button type="submit" class="btn btn-primary">Update Student</button>
-        </form>
-    </div>
-    <?php include("includes/footer.php"); ?>
+        <label>Semester:</label><br>
+        <select name="semester" required>
+            <option value="">-- Select Semester --</option>
+            <?php for ($i = 1; $i <= 8; $i++): ?>
+                <option value="<?php echo $i; ?>" <?php if ($i == $student['semester']) echo 'selected'; ?>><?php echo $i; ?></option>
+            <?php endfor; ?>
+        </select><br><br>
+
+        <button type="submit">Update Student</button>
+    </form>
+</div>
+
+<?php include("footer.php"); ?>
 </body>
 </html>

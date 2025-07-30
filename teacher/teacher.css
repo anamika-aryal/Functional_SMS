@@ -178,7 +178,6 @@ td a:hover {
     margin: 4px 0;
     font-size: 0.95rem;
 }
-
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
     .navigation {
@@ -197,4 +196,52 @@ td a:hover {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Quick Overview Widgets ===== */
+.quick-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.overview-widget {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 20px;
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.overview-widget:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+.overview-icon {
+    font-size: 2rem;
+    color: #C94F7C;
+    flex-shrink: 0;
+}
+
+.overview-details {
+    flex-grow: 1;
+}
+
+.overview-details h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.overview-details p {
+    margin: 4px 0 0;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #000;
 }

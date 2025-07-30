@@ -2,7 +2,7 @@
 session_start();
 require_once("../includes/db.php");
 
-// Role-based access for Student (role_id = 3)
+// Ensure student is logged in (role_id = 3 assumed)
 if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 3) {
     header("Location: ../login.php");
     exit;
@@ -11,21 +11,25 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 3) {
 $user_id = $_SESSION['user_id'];
 
 // Get student_id
-$student = $conn->query("SELECT student_id, first_name FROM students WHERE user_id = $user_id")->fetch_assoc();
-$student_id = $student['student_id'];
+$studentData = $conn->query("SELECT student_id FROM students WHERE user_id = $user_id")->fetch_assoc();
+$student_id = $studentData['student_id'];
 
-// Fetch assignments for enrolled courses
-$query = "
-    SELECT a.assignment_id, a.title, a.description, a.due_date, c.course_name,
-           IFNULL(s.status, 'Not Submitted') AS status
+// Fetch assignments only for courses the student is enrolled in
+$sql = "
+    SELECT a.assignment_id, a.title, a.description, a.due_date, c.course_name, c.course_code,
+           s.status AS submission_status, s.grade, s.submission_date
     FROM assignments a
     JOIN courses c ON a.course_id = c.course_id
-    JOIN enrollments e ON e.course_id = c.course_id
-    LEFT JOIN submissions s ON s.assignment_id = a.assignment_id AND s.student_id = $student_id
-    WHERE e.student_id = $student_id
-    ORDER BY a.due_date ASC
+    JOIN enrollments e ON a.course_id = e.course_id
+    LEFT JOIN submissions s 
+           ON a.assignment_id = s.assignment_id AND s.student_id = ?
+    WHERE e.student_id = ?
+    ORDER BY a.due_date DESC
 ";
-$assignments = $conn->query($query);
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ii", $student_id, $student_id);
+$stmt->execute();
+$assignments = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -36,10 +40,10 @@ $assignments = $conn->query($query);
 </head>
 <body>
     <div class="navigation">
-        <h2><?= $student['first_name']?>'s Assignments</h2>
+        <h2>My Assignments</h2>
         <div>
             <a href="dashboard.php">Dashboard</a>
-            <a href="assignments.php">Assignments</a>
+            <a href="assignments.php" class="btn btn-primary">Assignments</a>
             <a href="attendance.php">Attendance</a>
             <a href="result.php">Results</a>
             <a href="profile_setup.php">Profile</a>
@@ -48,39 +52,58 @@ $assignments = $conn->query($query);
     </div>
 
     <div class="card">
-        <h3>📝 Assignment List</h3>
-        <table>
-            <tr>
-                <th>Course</th>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Due Date</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-            <?php
-            if ($assignments->num_rows > 0) {
-                while ($row = $assignments->fetch_assoc()) {
-                    $status = $row['status'];
-                    $action = ($status == 'Not Submitted') 
-                        ? "<a href='submit_assignment.php?assignment_id={$row['assignment_id']}'>Submit</a>" 
-                        : "<span style='color:green;'>Submitted</span>";
+        <h3>📚 Assignments</h3>
 
-                    echo "<tr>
-                            <td>{$row['course_name']}</td>
-                            <td>{$row['title']}</td>
-                            <td>{$row['description']}</td>
-                            <td>{$row['due_date']}</td>
-                            <td>$status</td>
-                            <td>$action</td>
-                          </tr>";
-                }
-            } else {
-                echo "<tr><td colspan='6'>No assignments found.</td></tr>";
-            }
-            ?>
-        </table>
+        <?php if ($assignments->num_rows > 0): ?>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Title</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($row = $assignments->fetch_assoc()): ?>
+                        <?php
+                        // Determine assignment status
+                        if ($row['submission_status'] === null) {
+                            $status = "<span style='color:red;'>Not Submitted</span>";
+                        } elseif ($row['grade'] === null || $row['grade'] === '') {
+                            $status = "<span style='color:orange;'>Submitted</span>";
+                        } else {
+                            $status = "<span style='color:green;'>Graded ({$row['grade']})</span>";
+                        }
+
+                        // Highlight overdue if not submitted
+                        $dueClass = "";
+                        if (strtotime($row['due_date']) < time() && $row['submission_status'] === null) {
+                            $dueClass = "style='color:red; font-weight:bold;'";
+                        }
+                        ?>
+                        <tr>
+                            <td><?= htmlspecialchars($row['course_code'] . " - " . $row['course_name']) ?></td>
+                            <td><?= htmlspecialchars($row['title']) ?></td>
+                            <td <?= $dueClass ?>><?= date("d M Y", strtotime($row['due_date'])) ?></td>
+                            <td><?= $status ?></td>
+                            <td>
+                                <?php if ($row['submission_status'] === null && strtotime($row['due_date']) >= time()): ?>
+                                    <a href="submit_assignment.php?id=<?= $row['assignment_id'] ?>" class="btn btn-primary">Submit</a>
+                                <?php elseif ($row['submission_status'] !== null): ?>
+                                    <a href="view_submission.php?id=<?= $row['assignment_id'] ?>" class="btn">View</a>
+                                <?php else: ?>
+                                    <span style="color:gray;">Closed</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <p>No assignments found.</p>
+        <?php endif; ?>
     </div>
-    <?php include("includes/footer.php"); ?>
 </body>
 </html>

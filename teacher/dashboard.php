@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 2) {
 
 $user_id = $_SESSION['user_id'];
 
-// Get teacher_id
+// Get teacher info
 $teacher = $conn->query("SELECT teacher_id, first_name, last_name FROM teachers WHERE user_id = $user_id")->fetch_assoc();
 $teacher_id = $teacher['teacher_id'];
 
@@ -53,9 +53,9 @@ $events = $conn->query("
 </head>
 <body>
     <div class="navigation">
-        <h2>Welcome, <?= $teacher['first_name'] ?> <?= $teacher['last_name'] ?></h2>
+        <h2>Welcome, <?= htmlspecialchars($teacher['first_name']) ?> <?= htmlspecialchars($teacher['last_name']) ?></h2>
         <div>
-            <a href="dashboard.php">Dashboard</a>
+            <a href="dashboard.php" class="btn btn-primary">Dashboard</a>
             <a href="assignments.php">Assignments</a>
             <a href="attendance.php">Attendance</a>
             <a href="add_result.php">Results</a>
@@ -64,12 +64,31 @@ $events = $conn->query("
         </div>
     </div>
 
-    <!-- Quick Overview -->
-    <div class="card">
-        <h3>📊 Quick Overview</h3>
-        <p>Courses Assigned: <strong><?= $courses->num_rows ?></strong></p>
-        <p>Students Enrolled: <strong><?= $students_count ?></strong></p>
-        <p>Total Assignments: <strong><?= $assignments_count ?></strong></p>
+    <!-- Quick Overview Widgets -->
+    <div class="quick-overview">
+        <div class="overview-widget">
+            <div class="overview-icon">📚</div>
+            <div class="overview-details">
+                <h4>Courses Assigned</h4>
+                <p><?= $courses->num_rows ?></p>
+            </div>
+        </div>
+
+        <div class="overview-widget">
+            <div class="overview-icon">👨‍🎓</div>
+            <div class="overview-details">
+                <h4>Students Enrolled</h4>
+                <p><?= $students_count ?></p>
+            </div>
+        </div>
+
+        <div class="overview-widget">
+            <div class="overview-icon">📝</div>
+            <div class="overview-details">
+                <h4>Total Assignments</h4>
+                <p><?= $assignments_count ?></p>
+            </div>
+        </div>
     </div>
 
     <!-- Assigned Courses -->
@@ -81,23 +100,21 @@ $events = $conn->query("
                 <th>Course Name</th>
                 <th>Actions</th>
             </tr>
-            <?php
-            if ($courses->num_rows > 0) {
-                while ($course = $courses->fetch_assoc()) {
-                    echo "<tr>
-                            <td>{$course['course_code']}</td>
-                            <td>{$course['course_name']}</td>
-                            <td>
-                                <a href='assignments.php?course_id={$course['course_id']}'>Assignments</a> | 
-                                <a href='attendance.php?course_id={$course['course_id']}'>Attendance</a> | 
-                                <a href='add_result.php?course_id={$course['course_id']}'>Results</a>
-                            </td>
-                          </tr>";
-                }
-            } else {
-                echo "<tr><td colspan='3'>No courses assigned.</td></tr>";
-            }
-            ?>
+            <?php if ($courses->num_rows > 0): ?>
+                <?php while ($course = $courses->fetch_assoc()): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($course['course_code']) ?></td>
+                        <td><?= htmlspecialchars($course['course_name']) ?></td>
+                        <td>
+                            <a href="assignments.php?course_id=<?= $course['course_id'] ?>">Assignments</a> | 
+                            <a href="attendance.php?course_id=<?= $course['course_id'] ?>">Attendance</a> | 
+                            <a href="add_result.php?course_id=<?= $course['course_id'] ?>">Results</a>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <tr><td colspan="3">No courses assigned.</td></tr>
+            <?php endif; ?>
         </table>
     </div>
 
@@ -105,24 +122,20 @@ $events = $conn->query("
     <div class="card">
         <h3>📅 Upcoming Events</h3>
         <div class="event-cards">
-            <?php
-            if ($events->num_rows > 0) {
-                while ($row = $events->fetch_assoc()) {
-                    echo "
-                        <div class='event-card'>
-                            <h4>{$row['title']}</h4>
-                            <p>Date: {$row['event_date']}</p>
-                            <p>Venue: {$row['venue']}</p>
-                        </div>
-                    ";
-                }
-            } else {
-                echo "<p>No upcoming events.</p>";
-            }
-            ?>
+            <?php if ($events->num_rows > 0): ?>
+                <?php while ($row = $events->fetch_assoc()): ?>
+                    <div class="event-card">
+                        <h4><?= htmlspecialchars($row['title']) ?></h4>
+                        <p>Date: <?= htmlspecialchars($row['event_date']) ?></p>
+                        <p>Venue: <?= htmlspecialchars($row['venue']) ?></p>
+                    </div>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <p>No upcoming events.</p>
+            <?php endif; ?>
         </div>
     </div>
-    <!-- Footer -->
-     <?php include("includes/footer.php"); ?>
+
+    <?php include("includes/footer.php"); ?>
 </body>
 </html>

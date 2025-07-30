@@ -37,6 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
+<?php include("./includes/header.php"); ?>
     <div class="navigation">
         <h2>Add Teacher</h2>
         <a href="dashboard.php">⬅ Back to Dashboard</a>
