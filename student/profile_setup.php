@@ -81,7 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="navigation">
-        <h2>My Profile</h2>
+        <img src="../uploads/profile_photos/<?= $student['profile_photo'] ?>" width="80" style="border-radius:50%;"><h2 style="margin-left: -450px">My Profile</h2>
         <div>
             <a href="dashboard.php">Dashboard</a>
             <a href="assignments.php">Assignments</a>
@@ -124,5 +124,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <button class="btn btn-primary" type="submit">Update Profile</button>
         </form>
     </div>
+    <?php include("includes/footer.php"); ?>
 </body>
 </html>

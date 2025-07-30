@@ -112,5 +112,6 @@ $submissions = $conn->query("
             <?php endif; ?>
         </table>
     </div>
+    <?php include("includes/footer.php"); ?>
 </body>
 </html>

@@ -140,5 +140,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['results'])) {
             <p>No students enrolled in this course.</p>
         <?php endif; ?>
     </div>
+    <?php include("includes/footer.php"); ?>
 </body>
 </html>

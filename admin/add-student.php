@@ -76,9 +76,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <label>Phone</label>
             <input type="text" name="phone" required>
 
+             <label>Course</label>
+            <input type="text" name="phone" required>
+
+             <label>Semester</label>
+            <input type="text" name="phone" required>
+
             <button class="btn btn-primary" type="submit">Add Student</button>
         </form>
     </div>
+    <?php include("includes/footer.php"); ?>
 </body>
 </html>
 

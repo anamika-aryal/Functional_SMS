@@ -108,5 +108,7 @@ if ($course_id) {
         </table>
     </div>
     <?php endif; ?>
+    <!-- Footer -->
+     <?php include("includes/footer.php"); ?>
 </body>
 </html>

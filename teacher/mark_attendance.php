@@ -117,5 +117,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['attendance'])) {
             <button type="submit" class="btn btn-primary" style="margin-top:15px;">Save Attendance</button>
         </form>
     </div>
+    <?php include("includes/footer.php"); ?>
 </body>
 </html>

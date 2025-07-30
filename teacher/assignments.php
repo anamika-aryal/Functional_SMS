@@ -82,5 +82,6 @@ $assignments = $conn->query($query);
             ?>
         </table>
     </div>
+    <?php include("includes/footer.php"); ?>
 </body>
 </html>

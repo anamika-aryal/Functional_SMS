@@ -115,5 +115,6 @@ $courses = $conn->query("SELECT course_id, course_name FROM courses WHERE instru
             <button class="btn btn-primary" type="submit">Add Assignment</button>
         </form>
     </div>
+    <?php include("includes/footer.php"); ?>
 </body>
 </html>

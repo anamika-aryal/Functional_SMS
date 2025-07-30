@@ -2,7 +2,7 @@
     
     <footer class="footer">
         <hr>
-        <p style="algin-text: center;">© <?= date('Y') ?> Student Management System | Admin Panel</p>
+        <p style=" text-algin: center; ">© <?= date('Y') ?> Student Management System | Student Panel</p>
         <p style="color: red; align-text: center; ">Created by: Anamika, Suraj, Anshika, Anjana </p>
     </footer>
 </body>

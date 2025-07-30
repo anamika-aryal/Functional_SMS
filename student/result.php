@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role_id'] != 3) {
 $user_id = $_SESSION['user_id'];
 
 // Get student_id
-$student = $conn->query("SELECT student_id FROM students WHERE user_id = $user_id")->fetch_assoc();
+$student = $conn->query("SELECT student_id, first_name FROM students WHERE user_id = $user_id")->fetch_assoc();
 $student_id = $student['student_id'];
 
 // Fetch student results
@@ -37,7 +37,7 @@ $metrics = $conn->query("
 </head>
 <body>
     <div class="navigation">
-        <h2>My Results</h2>
+        <h2><?= $student['first_name']?>'s Results</h2>
         <div>
             <a href="dashboard.php">Dashboard</a>
             <a href="assignments.php">Assignments</a>
@@ -89,5 +89,6 @@ $metrics = $conn->query("
         <p>SGPA: <strong><?= $metrics['sgpa'] ?? 'N/A' ?></strong></p>
         <p>CGPA: <strong><?= $metrics['cgpa'] ?? 'N/A' ?></strong></p>
     </div>
+    <?php include("includes/footer.php"); ?>
 </body>
 </html>

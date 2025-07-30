@@ -56,5 +56,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <button class="btn btn-primary" type="submit">Add Course</button>
         </form>
     </div>
+    <?php include("includes/footer.php"); ?>
 </body>
 </html>

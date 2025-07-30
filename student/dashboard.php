@@ -17,6 +17,8 @@ $metrics = $conn->query("
     )
 ")->fetch_assoc();
 
+$student = $conn->query("SELECT first_name, last_name FROM students WHERE user_id = $user_id")->fetch_assoc();
+
 // Fetch recent assignments for student
 $assignments = $conn->query("
     SELECT a.title, a.due_date, c.course_name
@@ -46,7 +48,7 @@ $events = $conn->query("
 </head>
 <body>
     <div class="navigation">
-        <h2>Welcome, Student</h2>
+        <h2>Welcome, <?= $student['first_name'] ?> <?= $student['last_name']?> </h2>
         <div>
             <a href="dashboard.php">Dashboard</a>
             <a href="assignments.php">Assignments</a>
@@ -110,5 +112,6 @@ $events = $conn->query("
             ?>
         </div>
     </div>
+    <?php include("includes/footer.php"); ?>
 </body>
 </html>

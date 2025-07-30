@@ -81,5 +81,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <button type="submit" class="btn btn-primary">Update Teacher</button>
         </form>
     </div>
+    <?php include("includes/footer.php"); ?>
 </body>
 </html>
