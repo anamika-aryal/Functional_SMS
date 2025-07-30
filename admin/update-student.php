@@ -81,9 +81,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <html>
 <head>
     <title>Update Student</title>
+    <link rel="stylesheet" href="admin.css"> <!-- Optional: Your CSS -->
 </head>
 <body>
-<?php include("header.php"); ?>
+<?php include("./includes/header.php"); ?>
 
 <div class="container">
     <h2>Update Student</h2>
@@ -133,7 +134,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <button type="submit">Update Student</button>
     </form>
 </div>
-
-<?php include("footer.php"); ?>
+<?php include("./includes/footer.php"); ?>
 </body>
 </html>

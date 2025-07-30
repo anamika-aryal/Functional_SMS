@@ -92,7 +92,7 @@ $assignments = $stmt->get_result();
                                 <?php if ($row['submission_status'] === null && strtotime($row['due_date']) >= time()): ?>
                                     <a href="submit_assignment.php?id=<?= $row['assignment_id'] ?>" class="btn btn-primary">Submit</a>
                                 <?php elseif ($row['submission_status'] !== null): ?>
-                                    <a href="view_submission.php?id=<?= $row['assignment_id'] ?>" class="btn">View</a>
+                                    <a href="my_submissions.php?id=<?= $row['assignment_id'] ?>" class="btn">View</a>
                                 <?php else: ?>
                                     <span style="color:gray;">Closed</span>
                                 <?php endif; ?>
@@ -105,5 +105,6 @@ $assignments = $stmt->get_result();
             <p>No assignments found.</p>
         <?php endif; ?>
     </div>
+<?php include("./includes/footer.php"); ?>
 </body>
 </html>

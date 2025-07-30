@@ -50,6 +50,7 @@ $events = $conn->query("
     <meta charset="UTF-8">
     <title>Teacher Dashboard</title>
     <link rel="stylesheet" href="teacher.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="navigation">
@@ -64,32 +65,34 @@ $events = $conn->query("
         </div>
     </div>
 
-    <!-- Quick Overview Widgets -->
-    <div class="quick-overview">
-        <div class="overview-widget">
-            <div class="overview-icon">📚</div>
-            <div class="overview-details">
-                <h4>Courses Assigned</h4>
-                <p><?= $courses->num_rows ?></p>
-            </div>
-        </div>
+  <!-- Quick Overview Widgets -->
 
-        <div class="overview-widget">
-            <div class="overview-icon">👨‍🎓</div>
-            <div class="overview-details">
-                <h4>Students Enrolled</h4>
-                <p><?= $students_count ?></p>
-            </div>
-        </div>
-
-        <div class="overview-widget">
-            <div class="overview-icon">📝</div>
-            <div class="overview-details">
-                <h4>Total Assignments</h4>
-                <p><?= $assignments_count ?></p>
-            </div>
+<div class="quick-overview">
+    <div class="overview-widget">
+        <div class="overview-icon">📚</div>
+        <div class="overview-details">
+            <h4>Courses Assigned</h4>
+            <p><?= $courses->num_rows ?></p>
         </div>
     </div>
+
+    <div class="overview-widget">
+        <div class="overview-icon">👨‍🎓</div>
+        <div class="overview-details">
+            <h4>Students Enrolled</h4>
+            <p><?= $students_count ?></p>
+        </div>
+    </div>
+
+    <div class="overview-widget">
+        <div class="overview-icon">📝</div>
+        <div class="overview-details">
+            <h4>Total Assignments</h4>
+            <p><?= $assignments_count ?></p>
+        </div>
+    </div>
+</div>
+
 
     <!-- Assigned Courses -->
     <div class="card">

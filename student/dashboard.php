@@ -93,16 +93,17 @@ $events = $conn->query("
 </head>
 <body>
     <div class="navigation">
-        <h2>Welcome, <?= htmlspecialchars($student['first_name']) ?> <?= htmlspecialchars($student['last_name']) ?> </h2>
-        <div>
-            <a href="dashboard.php" class="btn btn-primary">Dashboard</a>
-            <a href="assignments.php">Assignments</a>
-            <a href="attendance.php">Attendance</a>
-            <a href="result.php">Results</a>
-            <a href="profile_setup.php">Profile</a>
-            <a href="../logout.php">Logout</a>
-        </div>
+    <h2>Welcome, <?= $student['first_name'] ?> <?= $student['last_name']?> </h2>
+    <div>
+        <a href="dashboard.php">Dashboard</a>
+        <a href="assignments.php">Assignments</a>
+        <a href="my_submissions.php">My Submissions</a> 
+        <a href="attendance.php">Attendance</a>
+        <a href="result.php">Results</a>
+        <a href="profile_setup.php">Profile</a>
+        <a href="../logout.php">Logout</a>
     </div>
+</div>
 
     <!-- Quick Overview Widgets -->
 <div class="quick-overview">
